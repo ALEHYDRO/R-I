@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DRTS Test Booking</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f7fb;--card:#fff;--tx:#10243d;--mu:#56667c;--bd:#d5deea;--pr:#0b4f8a;--prt:#fff;--ok:#0d6b45;--okbg:#e0f3ea;--no:#a3241c;--nobg:#fbe8e6;--wn:#6e4300;--wnbg:#fff0cc;--sel:#e3eefa}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1523;--card:#16202f;--tx:#e8eef6;--mu:#9aabc1;--bd:#2a3850;--pr:#75aadb;--prt:#08121f;--ok:#62d19d;--okbg:#10362a;--no:#ff918a;--nobg:#3a1b19;--wn:#f3c76c;--wnbg:#392c0f;--sel:#1c2f48}}
+:root[data-theme="dark"]{--bg:#0d1523;--card:#16202f;--tx:#e8eef6;--mu:#9aabc1;--bd:#2a3850;--pr:#75aadb;--prt:#08121f;--ok:#62d19d;--okbg:#10362a;--no:#ff918a;--nobg:#3a1b19;--wn:#f3c76c;--wnbg:#392c0f;--sel:#1c2f48}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.5 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:#75aadb;color:#0b2540;padding:16px 0 14px}
+.band{height:14px;background:linear-gradient(#fff 0 22%,#000 22% 78%,#fff 78%)}
+.w{max-width:780px;margin:0 auto;padding:0 16px}
+header .w{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+h1{font-size:1.5rem;line-height:1.2;margin:0}
+header p{margin:2px 0 0;font-size:.95rem}
+nav{display:flex;gap:6px}
+nav button{background:transparent;color:inherit;border:2px solid #0b2540;border-radius:8px;padding:6px 12px;font:inherit;font-weight:700;cursor:pointer}
+nav button.on{background:#0b2540;color:#fff}
+h2{font-size:1.15rem;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:18px;margin:16px 0}
+.grid{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(125px,1fr))}
+.opt{border:2px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;padding:10px;text-align:left;cursor:pointer;font:inherit}
+.opt.on{border-color:var(--pr);background:var(--sel)}
+.opt:disabled{opacity:.55;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--pr);outline-offset:2px}
+.tag{display:inline-block;font-size:.85rem;padding:0 8px;border-radius:99px;font-weight:700}
+.ok{background:var(--okbg);color:var(--ok)}.no{background:var(--nobg);color:var(--no)}.wn{background:var(--wnbg);color:var(--wn)}
+.btn{background:var(--pr);color:var(--prt);border:0;border-radius:8px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer;margin:6px 6px 0 0}
+.btn:disabled{opacity:.6}
+label{display:block;font-size:.95rem;margin:12px 0 4px;font-weight:700}
+input,select{width:100%;padding:10px;border:2px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);font:inherit}
+input[type=checkbox]{width:auto;margin-right:8px}
+.msg{padding:10px 12px;border-radius:8px;margin:12px 0}
+.mu{color:var(--mu)}.sm{font-size:.9rem}
+.row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--bd)}
+</style>
+</head>
+<body>
+<header><div class="w"><div><h1>Book your driving test</h1><p>Department of Road Transport and Safety, Botswana</p></div>
+<nav><button data-tab="book" class="on" id="nb">Book a test</button><button data-tab="mine" id="nm">My bookings</button></nav></div></header>
+<div class="band"></div>
+<main class="w" id="app"></main>
+<footer class="w mu sm"><p>This is a coursework prototype. Availability and payment are simulated, and bookings are saved only in this browser.</p></footer>
+<script>
+const CENTRES=["Ramotswa","Maru-A-Pula","Molepolole","Francistown","Palapye"];
+const TESTS={theory:{n:"Theory test",cap:10,fee:50,d:"Written test on the rules of the road"},yard:{n:"Yard test",cap:4,fee:100,pre:"theory",d:"Manoeuvres at the testing yard"},road:{n:"Road test",cap:2,fee:150,pre:"yard",d:"Driving on public roads with an examiner"}};
+const TIMES=["08:00","10:00","13:00","15:00"];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today=new Date();today.setHours(0,0,0,0);
+const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const fmt=s=>new Date(s+"T00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+let bk=[];try{bk=JSON.parse(localStorage.getItem("drts")||"[]")}catch(e){}
+const save=()=>{try{localStorage.setItem("drts",JSON.stringify(bk))}catch(e){}};
+const DAYS=[];for(let i=1;i<=75;i++){const d=new Date(today);d.setDate(d.getDate()+i);if(d.getDay()%6)DAYS.push({s:ymd(d),i})}
+const h=s=>{let x=0;for(const c of s)x=(x*31+c.charCodeAt(0))>>>0;return x};
+const used=(c,t,d,tm)=>{const cap=TESTS[t].cap,blk=c==="Maun"&&t==="road"?25:c==="Gaborone"&&t==="yard"?9:0;if(d.i<blk)return cap;const r=h(c+t+d.s+tm)%100,b=r<30?cap:r%cap;return Math.min(cap,b+bk.filter(x=>x.st==="active"&&x.c===c&&x.t===t&&x.d===d.s&&x.tm===tm).length)};
+const left=(c,t,d)=>TIMES.reduce((a,tm)=>a+TESTS[t].cap-used(c,t,d,tm),0);
+let DL=null;const has=(f,t,st)=>bk.some(x=>x.id===f.id.replace(/\D/g,"")&&x.t===t&&x.st===st);const s={tab:"book",t:"theory",c:"Gaborone",day:null,tm:null,f:{name:"",id:"",ph:"",ll:false,pm:"Card",pn:""},err:"",busy:false,done:null};
+const dayBtn=(d,l)=>`<button class="opt${s.day&&s.day.s===d.s?" on":""}" data-d="${d.s}"${l?"":" disabled"}>${fmt(d.s)}<br><span class="tag ${l?"ok":"no"}">${l?l+" left":"Full"}</span></button>`;
+function book(){
+ const T=TESTS[s.t],av=DAYS.map(d=>({d,l:left(s.c,s.t,d)})),first=av.find(x=>x.l>0),shown=av.slice(0,10),allFull=shown.every(x=>!x.l);
+ let o=`<section class="card"><h2>Choose a test and centre</h2><div class="grid">`+Object.entries(TESTS).map(([k,v])=>`<button class="opt${k===s.t?" on":""}" data-t="${k}"><b>${v.n}</b><br><span class="sm mu">${v.d}</span><br><span class="sm">Fee: P${v.fee}</span>${v.pre?`<br><span class="sm mu">Needs a pass in the ${TESTS[v.pre].n.toLowerCase()}</span>`:""}</button>`).join("")+`</div><label for="c">Test centre</label><select id="c">${CENTRES.map(c=>`<option${c===s.c?" selected":""}>${c}</option>`).join("")}</select></section>`;
+ o+=`<section class="card"><h2>Check availability</h2>`;
+ o+=first?`<p>${allFull?`<span class="tag wn">Fully booked for the next two weeks</span> `:""}The next open date is <b>${fmt(first.d.s)}</b> with ${first.l} places.</p>`:`<p><span class="tag no">No open dates in the next 75 days</span> Check again later.</p>`;
+ o+=`<div class="grid">`+shown.map(x=>dayBtn(x.d,x.l)).join("")+`</div>`;
+ if(allFull&&first)o+=`<p class="mu">Future schedule: the next dates with places</p><div class="grid">`+av.filter(x=>x.l>0).slice(0,4).map(x=>dayBtn(x.d,x.l)).join("")+`</div>`;
+ if(s.day)o+=`<p><b>${fmt(s.day.s)}</b>: choose a time</p><div class="grid">`+TIMES.map(tm=>{const l=T.cap-used(s.c,s.t,s.day,tm);return `<button class="opt${s.tm===tm?" on":""}" data-tm="${tm}"${l?"":" disabled"}>${tm}<br><span class="tag ${l?"ok":"no"}">${l?l+" left":"Full"}</span></button>`}).join("")+`</div>`;
+ return o+`</section>`+(s.tm?form():"");
+}
+function form(){
+ const T=TESTS[s.t],f=s.f;
+ return `<section class="card"><h2>Your details and payment</h2>
+<label for="name">Full name</label><input id="name" data-f="name" value="${esc(f.name)}" autocomplete="name">
+<label for="idn">Omang or ID number</label><input id="idn" data-f="id" value="${esc(f.id)}" inputmode="numeric" maxlength="9" placeholder="9 digits">
+<label for="ph">Phone number</label><input id="ph" data-f="ph" value="${esc(f.ph)}" inputmode="numeric" maxlength="8" placeholder="8 digits">
+${s.t!=="theory"?`<label><input type="checkbox" data-f="ll"${f.ll?" checked":""}>I hold a valid learner’s licence</label>`:""}
+<label for="pm">Payment method</label><select id="pm" data-f="pm">${["Card","Mobile money"].map(m=>`<option${m===f.pm?" selected":""}>${m}</option>`).join("")}</select>
+<label for="pn">${f.pm==="Card"?"Card number":"Mobile money number"}</label><input id="pn" data-f="pn" value="${esc(f.pn)}" inputmode="numeric" maxlength="${f.pm==="Card"?16:8}" placeholder="${f.pm==="Card"?"16 digits":"8 digits"}">
+${s.err?`<div class="msg no" role="alert">${s.err}</div>`:""}
+<p class="mu">${T.n} at ${s.c}<br>${fmt(s.day.s)} at ${s.tm}, fee P${T.fee}</p>
+<button class="btn" id="payb"${s.busy?" disabled":""}>${s.busy?"Processing payment…":"Pay P"+T.fee+" and book"}</button></section>`;
+}
+const done=()=>{const r=s.done,T=TESTS[r.t];return `<section class="card"><div class="msg ok" role="status"><b>Booking confirmed</b></div><h2>Reference ${r.ref}</h2><p>${esc(r.name)}<br>${T.n} at ${r.c}<br>${fmt(r.d)} at ${r.tm}<br>Fee paid: P${r.fee}</p><p class="mu sm">In the full system, a confirmation and reminders would be sent by SMS and email.</p><button class="btn" id="again">Book another test</button>${DL?`<button class="btn" id="dl">Download confirmation</button>`:`<button class="btn" id="print">Print or save as PDF</button>`}<p id="dlmsg" class="mu sm" role="status"></p></section>`};
+const mine=()=>`<section class="card"><h2>My bookings</h2><p class="mu sm">Tests must be passed in order: theory, then yard, then road. In the real system the examiner records each result.</p>`+(bk.length?bk.slice().reverse().map(r=>`<div class="row"><div><b>${TESTS[r.t].n}</b> at ${r.c}<br><span class="sm mu">${fmt(r.d)} at ${r.tm}, ref ${r.ref}</span></div><div>${r.st==="active"?`<button class="btn" data-cancel="${r.ref}">Cancel booking</button><br><span class="sm mu">Prototype only, record the result:</span><br><button class="btn" data-res="passed:${r.ref}">Passed</button><button class="btn" data-res="failed:${r.ref}">Failed</button>`:r.st==="passed"?`<span class="tag ok">Passed</span>`:r.st==="failed"?`<span class="tag no">Failed</span>`:`<span class="tag no">Cancelled</span>`}</div></div>`).join(""):`<p class="mu">No bookings yet on this device. Book a test to see it here.</p>`)+`</section>`;
+function render(){$("#app").innerHTML=s.tab==="mine"?mine():s.done?done():book();$("#nb").className=s.tab==="book"?"on":"";$("#nm").className=s.tab==="mine"?"on":""}
+function dlConf(){const r=s.done,T=TESTS[r.t],c=document.createElement("canvas");c.width=700;c.height=410;const x=c.getContext("2d"),F='"Atkinson Hyperlegible",Arial,sans-serif';
+ x.fillStyle="#fff";x.fillRect(0,0,700,410);x.fillStyle="#75aadb";x.fillRect(0,0,700,72);x.fillStyle="#0b2540";x.font="700 22px "+F;x.fillText("Department of Road Transport and Safety",24,34);x.font="16px "+F;x.fillText("Botswana: test booking confirmation",24,58);
+ x.fillStyle="#10243d";x.font="700 36px "+F;x.fillText(r.ref,24,128);
+ [["Name",r.name],["Test",T.n],["Centre",r.c],["Date",new Date(r.d+"T00:00").toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"})],["Time",r.tm],["Fee paid","P"+r.fee]].forEach((p,i)=>{x.fillStyle="#56667c";x.font="16px "+F;x.fillText(p[0],24,176+i*38);x.fillStyle="#10243d";x.font="700 20px "+F;x.fillText(p[1],150,176+i*38)});
+ c.toBlob(async b=>{const m=$("#dlmsg");try{await DL.save({filename:r.ref+".png",data:b});m.textContent="Confirmation saved."}catch(e){m.textContent=e&&e.code==="declined"?"":"The file could not be saved. Take a screenshot of this page instead."}})}
+(async()=>{try{DL=await claude.use("downloads");if(DL)render()}catch(e){}})();
+function pay(){
+ const f=s.f,n=v=>v.replace(/\D/g,"");
+ s.err=!f.name.trim()?"Enter your full name.":n(f.id).length!==9?"Enter a valid 9-digit Omang or ID number.":n(f.ph).length!==8?"Enter an 8-digit phone number.":s.t!=="theory"&&!f.ll?"A valid learner’s licence is needed for this test.":has(f,s.t,"passed")?"You have already passed the "+TESTS[s.t].n.toLowerCase()+".":has(f,s.t,"active")?"This ID already has an active "+TESTS[s.t].n.toLowerCase()+" booking. Cancel it first to book another.":TESTS[s.t].pre&&!has(f,TESTS[s.t].pre,"passed")?"You must pass the "+TESTS[TESTS[s.t].pre].n.toLowerCase()+" before booking the "+TESTS[s.t].n.toLowerCase()+".":n(f.pn).length!==(f.pm==="Card"?16:8)?"Enter a "+(f.pm==="Card"?"16-digit card":"8-digit mobile money")+" number.":"";
+ if(s.err)return render();
+ s.busy=true;render();
+ setTimeout(()=>{const r={ref:"DRTS-"+Math.random().toString(36).slice(2,8).toUpperCase(),t:s.t,c:s.c,d:s.day.s,tm:s.tm,name:f.name.trim(),id:n(f.id),st:"active",fee:TESTS[s.t].fee};bk.push(r);save();s.busy=false;s.done=r;s.f.pn="";render();scrollTo(0,0)},1200);
+}
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;
+ if(d.tab){s.tab=d.tab;s.done=null}
+ else if(d.t){s.t=d.t;s.day=null;s.tm=null;s.err=""}
+ else if(d.d){s.day=DAYS.find(x=>x.s===d.d);s.tm=null}
+ else if(d.tm)s.tm=d.tm;
+ else if(d.cancel)bk.find(x=>x.ref===d.cancel).st="cancelled",save();
+ else if(d.res){const[a,ref]=d.res.split(":");bk.find(x=>x.ref===ref).st=a;save()}
+ else if(b.id==="payb")return pay();
+ else if(b.id==="again"){s.done=null;s.day=null;s.tm=null}
+ else if(b.id==="print")return print();
+ else if(b.id==="dl")return dlConf();
+ else return;
+ render()});
+document.addEventListener("change",e=>{if(e.target.id==="c"){s.c=e.target.value;s.day=null;s.tm=null;render()}});
+document.addEventListener("input",e=>{const k=e.target.dataset.f;if(!k)return;const M={id:9,ph:8,pn:s.f.pm==="Card"?16:8};if(M[k])e.target.value=e.target.value.replace(/\D/g,"").slice(0,M[k]);s.f[k]=e.target.type==="checkbox"?e.target.checked:e.target.value;if(k==="pm"){s.f.pn=s.f.pn.slice(0,s.f.pm==="Card"?16:8);render()}});
+render();
+</script>
+</body>
+</html>
