@@ -47,7 +47,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 <main class="w" id="app"></main>
 <footer class="w mu sm"><p>This is a coursework prototype. Availability and payment are simulated, and bookings are saved only in this browser.</p></footer>
 <script>
-const CENTRES=["Ramotswa","Maru-A-Pula","Molepolole","Francistown","Palapye"];
+const CENTRES=["Ramotswa","Maru-A-Pula","Molepolole","Francistown","Palapye","Gaborone","Maun"];
 const TESTS={theory:{n:"Theory test",cap:10,fee:50,d:"Written test on the rules of the road"},yard:{n:"Yard test",cap:4,fee:100,pre:"theory",d:"Manoeuvres at the testing yard"},road:{n:"Road test",cap:2,fee:150,pre:"yard",d:"Driving on public roads with an examiner"}};
 const TIMES=["08:00","10:00","13:00","15:00"];
 const $=s=>document.querySelector(s);
@@ -67,7 +67,7 @@ function book(){
  const T=TESTS[s.t],av=DAYS.map(d=>({d,l:left(s.c,s.t,d)})),first=av.find(x=>x.l>0),shown=av.slice(0,10),allFull=shown.every(x=>!x.l);
  let o=`<section class="card"><h2>Choose a test and centre</h2><div class="grid">`+Object.entries(TESTS).map(([k,v])=>`<button class="opt${k===s.t?" on":""}" data-t="${k}"><b>${v.n}</b><br><span class="sm mu">${v.d}</span><br><span class="sm">Fee: P${v.fee}</span>${v.pre?`<br><span class="sm mu">Needs a pass in the ${TESTS[v.pre].n.toLowerCase()}</span>`:""}</button>`).join("")+`</div><label for="c">Test centre</label><select id="c">${CENTRES.map(c=>`<option${c===s.c?" selected":""}>${c}</option>`).join("")}</select></section>`;
  o+=`<section class="card"><h2>Check availability</h2>`;
- o+=first?`<p>${allFull?`<span class="tag wn">Fully booked for the next two weeks</span> `:""}The next open date is <b>${fmt(first.d.s)}</b> with ${first.l} places.</p>`:`<p><span class="tag no">No open dates in the next 75 days</span> Check again later.</p>`;
+ o+=first?`<p>${allFull?`<span class="tag wn">Fully booked for the dates shown</span> `:""}The next open date is <b>${fmt(first.d.s)}</b> with ${first.l} places.</p>`:`<p><span class="tag no">No open dates in the next 75 days</span> Check again later.</p>`;
  o+=`<div class="grid">`+shown.map(x=>dayBtn(x.d,x.l)).join("")+`</div>`;
  if(allFull&&first)o+=`<p class="mu">Future schedule: the next dates with places</p><div class="grid">`+av.filter(x=>x.l>0).slice(0,4).map(x=>dayBtn(x.d,x.l)).join("")+`</div>`;
  if(s.day)o+=`<p><b>${fmt(s.day.s)}</b>: choose a time</p><div class="grid">`+TIMES.map(tm=>{const l=T.cap-used(s.c,s.t,s.day,tm);return `<button class="opt${s.tm===tm?" on":""}" data-tm="${tm}"${l?"":" disabled"}>${tm}<br><span class="tag ${l?"ok":"no"}">${l?l+" left":"Full"}</span></button>`}).join("")+`</div>`;
